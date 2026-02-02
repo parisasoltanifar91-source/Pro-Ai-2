@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ultimate AI - Personal Assistant</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        /* -------------------------------------------------------------------------- */
+        /* CSS VARIABLES                              */
+        /* -------------------------------------------------------------------------- */
+        :root {
+            /* پالت رنگی مدرن و الهام گرفته از دیزاین متریال و جمینای */
+            --bg-color: #F0F2F5;
+            --primary-gradient: linear-gradient(135deg, #4285F4 0%, #9B72CB 50%, #D96570 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            --text-main: #1f1f1f;
+            --text-secondary: #5f6368;
+            --accent-color: #4285F4;
+            --user-msg-bg: #4285F4;
+            --user-msg-text: #ffffff;
+            --ai-msg-bg: rgba(255, 255, 255, 0.85);
+            --ai-msg-text: #1f1f1f;
+            
+            /* تنظیمات بلور */
+            --blur-amount: 20px;
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --border-radius-sm: 12px;
+            
+            /* رنگ‌های حباب‌های پس‌زمینه */
+            --blob-1: #E0E7FF;
+            --blob-2: #F3E8FF;
+            --blob-3: #FFE4E6;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* RESET & BASE                               */
+        /* -------------------------------------------------------------------------- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* اسکرول بار زیبا */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* BACKGROUND ANIMATION                           */
+        /* -------------------------------------------------------------------------- */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: white;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.7;
+            animation: moveOrb 20s infinite alternate ease-in-out;
+        }
+
+        .orb-1 {
+            top: -10%;
+            left: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: var(--blob-1);
+            animation-duration: 25s;
+        }
+
+        .orb-2 {
+            bottom: -20%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: var(--blob-2);
+            animation-delay: -5s;
+            animation-duration: 20s;
+        }
+
+        .orb-3 {
+            top: 40%;
+            left: 30%;
+            width: 40vw;
+            height: 40vw;
+            background: var(--blob-3);
+            animation-delay: -10s;
+            animation-duration: 30s;
+        }
+
+        @keyframes moveOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 100px) scale(1.1); }
+            100% { transform: translate(-30px, -50px) scale(0.95); }
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* COMPONENTS                                 */
+        /* -------------------------------------------------------------------------- */
+        
+        /* پنل شیشه‌ای اصلی */
+        .glass-view {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1;
+        }
+
+        .glass-view.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* LOGIN PAGE                                 */
+        /* -------------------------------------------------------------------------- */
+        .login-wrapper {
+            width: 90%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            padding: 50px 40px;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+            animation: floatUp 1s ease-out;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-desc {
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+        }
+
+        .form-input:focus {
+            background: #fff;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: var(--border-radius-sm);
+            border: none;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(66, 133, 244, 0.4);
+        }
+
+        .submit-btn:hover::after {
+            opacity: 1;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* LOADER PAGE                                */
+        /* -------------------------------------------------------------------------- */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spinner-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(0,0,0,0.05);
+            border-top-color: var(--accent-color);
+            border-right-color: #9B72CB;
+            animation: spin 1s infinite linear;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* INTRO PAGE                                 */
+        /* -------------------------------------------------------------------------- */
+        .intro-container {
+            text-align: center;
+        }
+
+        .intro-word {
+            font-size: 5rem;
+            font-weight: 900;
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .intro-word.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* CHAT INTERFACE                             */
+        /* -------------------------------------------------------------------------- */
+        .chat-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.05);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .brand {
+            font-weight: 900;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid white;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        /* Chat Area */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: msgAppear 0.4s forwards ease-out;
+        }
+
+        .message-row.user {
+            justify-content: flex-start; /* RTL: User on Right */
+        }
+
+        .message-row.ai {
+            justify-content: flex-end; /* RTL: AI on Left */
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 16px 24px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .bubble.user {
+            background: var(--user-msg-bg);
+            color: var(--user-msg-text);
+            border-radius: 20px 20px 4px 20px;
+            box-shadow: 0 8px 20px rgba(66, 133, 244, 0.25);
+        }
+
+        .bubble.ai {
+            background: var(--ai-msg-bg);
+            color: var(--ai-msg-text);
+            border-radius: 20px 20px 20px 4px;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+
+        /* Input Area */
+        .footer {
+            padding: 25px 30px;
+            background: rgba(255,255,255,0.3);
+            border-top: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-box-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 35px;
+            padding: 8px 15px 8px 25px;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.04);
+            transition: all 0.3s;
+        }
+
+        .input-box-wrapper:focus-within {
+            background: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            height: 40px;
+            color: var(--text-main);
+        }
+
+        .chat-input::placeholder {
+            color: #9aa0a6;
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: rotate(-15deg) scale(1.1);
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+            margin-right: -2px; /* اصلاح ویژوال آیکون */
+        }
+
+        .limit-info {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        /* Typing Animation */
+        .typing {
+            display: flex;
+            gap: 5px;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 15px;
+            width: fit-content;
+            margin-right: auto; /* سمت چپ */
+            margin-left: 20px;
+            display: none;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 50% { opacity: 0.5; } }
+        @keyframes floatUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes msgAppear { to { opacity: 1; transform: translateY(0); } }
+
+        /* Media Queries برای موبایل */
+        @media (max-width: 768px) {
+            .bubble { max-width: 85%; padding: 12px 18px; font-size: 0.95rem; }
+            .login-wrapper { width: 95%; padding: 30px 20px; }
+            .header { padding: 15px 20px; }
+            .intro-word { font-size: 3rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="background-container">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <section id="login-section" class="glass-view">
+        <div class="login-wrapper">
+            <h1 class="login-title">خوش آمدید</h1>
+            <p class="login-desc">برای شروع گفتگو، لطفاً خودتان را معرفی کنید. <br><span style="font-size:0.8em; color:red;">(نام شما غیرقابل تغییر خواهد بود)</span></p>
+            
+            <div class="form-group">
+                <input type="text" id="input-fname" class="form-input" placeholder="نام کوچک" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <input type="text" id="input-lname" class="form-input" placeholder="نام خانوادگی" autocomplete="off">
+            </div>
+            <button class="submit-btn" onclick="registerUser()">ورود به سیستم</button>
+        </div>
+    </section>
+
+    <section id="loading-section" class="glass-view">
+        <div class="loader-container">
+            <div class="spinner-ring"></div>
+            <div class="loading-text" id="loading-text">در حال راه‌اندازی...</div>
+        </div>
+    </section>
+
+    <section id="intro-section" class="glass-view">
+        <div class="intro-container">
+            <h1 id="intro-word-el" class="intro-word">Hello</h1>
+        </div>
+    </section>
+
+    <section id="chat-section" class="glass-view">
+        <div class="chat-wrapper">
+            <div class="header">
+                <div class="user-profile">
+                    <div class="user-avatar" id="u-avatar">?</div>
+                    <div class="user-name" id="u-name-display">کاربر مهمان</div>
+                </div>
+                <div class="brand">Ultimate AI</div>
+            </div>
+
+            <div class="messages-area" id="chat-container">
+                </div>
+
+            <div class="typing" id="typing-indicator">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="footer">
+                <div class="input-box-wrapper">
+                    <input type="text" id="msg-input" class="chat-input" placeholder="هر سوالی دارید بپرسید..." autocomplete="off">
+                    <button class="send-btn" onclick="handleSend()">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+                <div class="limit-info">سوالات باقی‌مانده امروز: <span id="limit-num">20</span></div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /**
+         * --------------------------------------------------------------------------
+         * CONFIG & STATE
+         * --------------------------------------------------------------------------
+         */
+        const CONFIG = {
+            limit: 20,
+            storageKeys: {
+                firstName: 'ultimate_ai_fname',
+                lastName: 'ultimate_ai_lname',
+                count: 'ultimate_ai_count',
+                date: 'ultimate_ai_date',
+                isRegistered: 'ultimate_ai_registered'
+            }
+        };
+
+        const DOM = {
+            sections: {
+                login: document.getElementById('login-section'),
+                loading: document.getElementById('loading-section'),
+                intro: document.getElementById('intro-section'),
+                chat: document.getElementById('chat-section')
+            },
+            inputs: {
+                fname: document.getElementById('input-fname'),
+                lname: document.getElementById('input-lname'),
+                msg: document.getElementById('msg-input')
+            },
+            display: {
+                userName: document.getElementById('u-name-display'),
+                userAvatar: document.getElementById('u-avatar'),
+                introWord: document.getElementById('intro-word-el'),
+                chatBox: document.getElementById('chat-container'),
+                typing: document.getElementById('typing-indicator'),
+                loadingText: document.getElementById('loading-text'),
+                limit: document.getElementById('limit-num')
+            }
+        };
+
+        /**
+         * --------------------------------------------------------------------------
+         * CORE LOGIC
+         * --------------------------------------------------------------------------
+         */
+        
+        // تابع اصلی شروع برنامه (Init)
+        (function init() {
+            // چک کردن اینکه کاربر قبلاً ثبت نام کرده یا نه
+            const isReg = localStorage.getItem(CONFIG.storageKeys.isRegistered);
+            
+            if (isReg === 'true') {
+                // کاربر قبلاً لاگین کرده -> مستقیم برو تو
+                loadUserData();
+                DOM.sections.login.style.display = 'none'; // حذف صفحه لاگین از جریان
+                DOM.sections.chat.classList.add('active');
+                addSystemMessage(`خوش برگشتید، ${localStorage.getItem(CONFIG.storageKeys.firstName)} عزیز! چطور می‌تونم امروز کمکت کنم؟`);
+                checkDailyLimit();
+            } else {
+                // کاربر جدید -> نمایش لاگین
+                DOM.sections.login.classList.add('active');
+            }
+        })();
+
+        // تابع ثبت نام کاربر (یک بار برای همیشه)
+        function registerUser() {
+            const fname = DOM.inputs.fname.value.trim();
+            const lname = DOM.inputs.lname.value.trim();
+
+            if (fname.length < 2 || lname.length < 2) {
+                alert("لطفاً نام و نام خانوادگی معتبر وارد کنید.");
+                return;
+            }
+
+            // ذخیره ابدی در LocalStorage
+            localStorage.setItem(CONFIG.storageKeys.firstName, fname);
+            localStorage.setItem(CONFIG.storageKeys.lastName, lname);
+            localStorage.setItem(CONFIG.storageKeys.isRegistered, 'true');
+
+            // شروع پروسه انیمیشن ورود
+            startLoadingSequence();
+        }
+
+        // سیکل لودینگ و اینترو
+        function startLoadingSequence() {
+            // 1. مخفی کردن لاگین
+            DOM.sections.login.classList.remove('active');
+            
+            // 2. نمایش لودینگ چرخشی
+            DOM.sections.loading.classList.add('active');
+            
+            // شبیه‌سازی مراحل لودینگ
+            const steps = ["در حال ذخیره‌سازی...", "پیکربندی هوش مصنوعی...", "اتصال به سرورهای ابری...", "آماده‌سازی رابط کاربری..."];
+            let stepIndex = 0;
+            
+            const stepInterval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    DOM.display.loadingText.innerText = steps[stepIndex];
+                    stepIndex++;
+                }
+            }, 800);
+
+            // 3. پایان لودینگ و شروع اینترو
+            setTimeout(() => {
+                clearInterval(stepInterval);
+                DOM.sections.loading.classList.remove('active');
+                playIntroAnimation();
+            }, 3500);
+        }
+
+        // انیمیشن Hello -> Welcome -> Pro AI
+        function playIntroAnimation() {
+            DOM.sections.intro.classList.add('active');
+            const words = ["Hello", "Welcome", "Ultimate AI"];
+            let i = 0;
+
+            function showNextWord() {
+                if (i >= words.length) {
+                    // پایان اینترو -> ورود به چت
+                    DOM.sections.intro.classList.remove('active');
+                    DOM.sections.chat.classList.add('active');
+                    loadUserData();
+                    addSystemMessage(`سلام ${localStorage.getItem(CONFIG.storageKeys.firstName)}! به محیط Ultimate AI خوش اومدی.`);
+                    checkDailyLimit();
+                    return;
+                }
+
+                DOM.display.introWord.innerText = words[i];
+                DOM.display.introWord.classList.add('active');
+
+                setTimeout(() => {
+                    DOM.display.introWord.classList.remove('active');
+                    i++;
+                    setTimeout(showNextWord, 500);
+                }, 1200);
+            }
+
+            setTimeout(showNextWord, 500);
+        }
+
+        // لود کردن دیتای کاربر در هدر
+        function loadUserData() {
+            const f = localStorage.getItem(CONFIG.storageKeys.firstName);
+            const l = localStorage.getItem(CONFIG.storageKeys.lastName);
+            DOM.display.userName.innerText = `${f} ${l}`;
+            DOM.display.userAvatar.innerText = f.charAt(0).toUpperCase();
+        }
+
+        // مدیریت محدودیت روزانه
+        function checkDailyLimit() {
+            const today = new Date().toLocaleDateString('fa-IR');
+            const storedDate = localStorage.getItem(CONFIG.storageKeys.date);
+            let count = parseInt(localStorage.getItem(CONFIG.storageKeys.count));
+
+            if (isNaN(count) || storedDate !== today) {
+                // روز جدید یا کاربر جدید
+                count = CONFIG.limit;
+                localStorage.setItem(CONFIG.storageKeys.date, today);
+                localStorage.setItem(CONFIG.storageKeys.count, count);
+            }
+            
+            DOM.display.limit.innerText = count;
+            return count;
+        }
+
+        function decreaseLimit() {
+            let count = parseInt(localStorage.getItem(CONFIG.storageKeys.count));
+            if (count > 0) {
+                count--;
+                localStorage.setItem(CONFIG.storageKeys.count, count);
+                DOM.display.limit.innerText = count;
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * --------------------------------------------------------------------------
+         * CHAT LOGIC & AI ENGINE
+         * --------------------------------------------------------------------------
+         */
+        
+        DOM.inputs.msg.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleSend();
+        });
+
+        function handleSend() {
+            const txt = DOM.inputs.msg.value.trim();
+            if (!txt) return;
+
+            if (checkDailyLimit() <= 0) {
+                addSystemMessage("متأسفانه سهمیه ۲۰ سوال امروز شما تمام شده است. لطفاً فردا مراجعه کنید.");
+                DOM.inputs.msg.value = '';
+                return;
+            }
+
+            // ارسال پیام کاربر
+            addUserMessage(txt);
+            DOM.inputs.msg.value = '';
+            decreaseLimit();
+
+            // حالت فکر کردن
+            DOM.display.typing.style.display = 'flex';
+            DOM.display.chatBox.scrollTop = DOM.display.chatBox.scrollHeight;
+
+            // تولید پاسخ با تاخیر مصنوعی
+            setTimeout(() => {
+                const response = generateAIResponse(txt);
+                DOM.display.typing.style.display = 'none';
+                addSystemMessage(response);
+            }, 1500 + Math.random() * 1000);
+        }
+
+        function addUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message-row user';
+            div.innerHTML = `<div class="bubble user">${escapeHtml(text)}</div>`;
+            DOM.display.chatBox.appendChild(div);
+            DOM.display.chatBox.scrollTop = DOM.display.chatBox.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message-row ai';
+            div.innerHTML = `<div class="bubble ai">${formatText(text)}</div>`;
+            DOM.display.chatBox.appendChild(div);
+            DOM.display.chatBox.scrollTop = DOM.display.chatBox.scrollHeight;
+        }
+
+        // تابع ساده برای جلوگیری از XSS
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // فرمت دهی ساده به متن (مثلا تبدیل \n به <br>)
+        function formatText(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+
+        /* =================================================================
+           HUGE KNOWLEDGE BASE (MOCK AI BRAIN)
+           این بخش برای این است که هوش مصنوعی بتواند جواب های متنوع بدهد
+           =================================================================
+        */
+        function generateAIResponse(input) {
+            const q = input.toLowerCase();
+            const userFname = localStorage.getItem(CONFIG.storageKeys.firstName);
+
+            // 1. احوالپرسی و تعاملات اجتماعی
+            if (match(q, ['سلام', 'درود', 'hi', 'hello'])) return `سلام ${userFname} عزیز! امیدوارم حالت عالی باشه. چه کمکی از دستم برمیاد؟`;
+            if (match(q, ['خوبی', 'حالت چطوره', 'چه خبر'])) return "من یک برنامه کامپیوتری هستم و همیشه در بهترین وضعیتم! مرسی که پرسیدی. تو چطوری؟";
+            if (match(q, ['اسم تو', 'کی هستی', 'معرفی'])) return "من Ultimate AI هستم. یک دستیار هوشمند که با تکنولوژی‌های مدرن وب طراحی شده تا به سوالاتت جواب بده.";
+            if (match(q, ['خداحافظ', 'بای', 'شب بخیر'])) return "خدانگهدار! هر وقت سوال داشتی من اینجام. روزت خوش.";
+            if (match(q, ['ممنون', 'مرسی', 'تشکر'])) return "خواهش می‌کنم! انجام وظیفه بود.";
+
+            // 2. اطلاعات عمومی و کاربردی
+            if (match(q, ['ساعت', 'زمان'])) return `الان ساعت ${new Date().toLocaleTimeString('fa-IR')} است.`;
+            if (match(q, ['تاریخ', 'امروز'])) return `امروز ${new Date().toLocaleDateString('fa-IR', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})} است.`;
+            
+            // 3. سوالات فلسفی و فان
+            if (match(q, ['شعر', 'حافظ', 'سعدی'])) return "ز کوی یار می‌آید نسیم باد نوروزی / از این باد ار مدد خواهی چراغ دل برافروزی";
+            if (match(q, ['جوک', 'لطیفه', 'خنده'])) return "یه روز یه مهندس کامپیوتر میره نونوایی، میگه آقا نون دارید؟ شاطر میگه: True. مهندس نون رو می‌گیره میره!";
+            if (match(q, ['عشق چیه', 'دوست داشتن'])) return "عشق یک واکنش شیمیایی پیچیده در مغز است که باعث میشه حس کنی یک نفر خاص، از همه دنیا مهم‌تره.";
+            if (match(q, ['معنی زندگی'])) return "به قول بسیاری از فلاسفه، معنی زندگی چیزیه که خودت براش میسازی. هدف داشتن و لذت بردن از لحظات.";
+
+            // 4. سوالات تکنولوژی
+            if (match(q, ['html', 'css', 'javascript'])) return "این‌ها سه رکن اصلی وب هستند. HTML ساختار، CSS ظاهر و JavaScript مغز متفکر سایت است. این صفحه‌ای که می‌بینی با هر سه ساخته شده!";
+            if (match(q, ['هوش مصنوعی', 'ai'])) return "هوش مصنوعی شبیه‌سازی فرآیندهای هوشی انسان توسط ماشین‌هاست. من یک نمونه کوچک از اون هستم.";
+            if (match(q, ['گوشی', 'موبایل'])) return "دنیای موبایل‌ها خیلی سریعه. الان رقابت اصلی بین اپل و سامسونگ و شیائومیه.";
+
+            // 5. سوالات متفرقه (گسترش دیتابیس)
+            if (match(q, ['غذا', 'شام', 'ناهار'])) return "قرمه‌سبزی یا کباب کوبیده همیشه گزینه‌های خوبی هستن! البته پیتزا هم بد نیست.";
+            if (match(q, ['فیلم', 'سینما'])) return "فیلم‌های نولان مثل Inception یا Interstellar رو پیشنهاد می‌کنم اگر به ژانر علمی تخیلی علاقه داری.";
+            if (match(q, ['فوتبال', 'ورزش'])) return "ورزش برای سلامتی عالیه. فوتبال هم که محبوب‌ترین ورزش دنیاست.";
+            if (match(q, ['پول', 'ثروت'])) return "پول مهمه اما همه چیز نیست. سلامتی و آرامش از پول باارزش‌ترن.";
+
+            // پاسخ پیش‌فرض برای سوالات ناشناس
+            const fallbacks = [
+                "سوال جالبیه، اما دقیقا متوجه منظورت نشدم. میشه جور دیگه بپرسی؟",
+                "اطلاعات من در این مورد کمه، ولی به نظر موضوع جذابی میاد.",
+                "هممم... بذار فکر کنم. شاید بهتر باشه در مورد چیز دیگه‌ای صحبت کنیم؟",
+                "من هنوز دارم یاد می‌گیرم. این سوال رو توی حافظه‌م نگه می‌دارم.",
+                `${userFname} جان، این سوال یکم پیچیده‌ست برام. ساده‌تر بگو.`
+            ];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+
+        // تابع کمکی برای پیدا کردن کلمات کلیدی
+        function match(text, keywords) {
+            return keywords.some(key => text.includes(key));
+        }
+
+    </script>
+</body>
+</html>
